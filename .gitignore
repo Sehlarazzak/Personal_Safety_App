@@ -1,11 +1,75 @@
+# Miscellaneous
+*.class
+*.lock
+*.log
+*.pyc
+*.swp
+.buildlog/
+.history
+
+# Flutter / Dart
 .dart_tool/
-.packages
-build/
 .flutter-plugins
 .flutter-plugins-dependencies
-*.iml
+.packages
+.pub/
+.pub-preload-cache/
+build/
+**/generated_plugin_registrant.dart
+
+# Android
+.gradle/
+**/android/local.properties
+**/android/key.properties
+**/android/captures/
+*.jks
+
+# iOS / Xcode
+**/ios/Pods/
+**/ios/.symlinks/
+**/ios/Flutter/ephemeral/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/flutter_assets/
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/**/xcuserdata/
+
+# macOS
+**/macos/Flutter/ephemeral/
+**/macos/**/xcuserdata/
+**/macos/Pods/
+
+# Windows
+**/windows/flutter/generated_plugin_registrant.cc
+**/windows/flutter/generated_plugin_registrant.h
+**/windows/flutter/generated_plugins.cmake
+
+# Linux
+**/linux/flutter/generated_plugin_registrant.cc
+**/linux/flutter/generated_plugin_registrant.h
+**/linux/flutter/generated_plugins.cmake
+
+# Coverage
+coverage/
+
+# IDE
 .idea/
 .vscode/
-ios/Pods/
-ios/.symlinks/
-android/.gradle/
+*.iml
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
