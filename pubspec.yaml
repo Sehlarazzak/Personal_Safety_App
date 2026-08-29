@@ -1,0 +1,48 @@
+name: safety_guard_app
+description: "Safety Guard - Personal Safety & Emergency Assistance App (Module 1: Foundation, UX, Architecture)"
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # State management (MVVM: ViewModels extend ChangeNotifier)
+  provider: ^6.1.2
+
+  # Declarative routing / navigation shell
+  go_router: ^14.2.0
+
+  # Google "Material Symbols" equivalent — we use Material Icons bundled
+  # with Flutter, so no extra icon package is required for Module 1.
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # NOTE (Module 1 scope):
+  # The design references the "Inter" font. Add the actual .ttf files under
+  # assets/fonts/ and uncomment the block below when the font files are
+  # available. Until then the theme falls back to the platform font so the
+  # app still builds and runs.
+  #
+  # fonts:
+  #   - family: Inter
+  #     fonts:
+  #       - asset: assets/fonts/Inter-Regular.ttf
+  #         weight: 400
+  #       - asset: assets/fonts/Inter-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Inter-Bold.ttf
+  #         weight: 700
+  #
+  # assets:
+  #   - assets/images/
