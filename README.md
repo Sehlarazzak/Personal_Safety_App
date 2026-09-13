@@ -1,23 +1,24 @@
 # 🛡️ Safety Guard
 
-A personal safety and emergency-assistance app built with **Flutter** using an **MVVM architecture**. This repository currently contains **Module 1: Product Foundation, UX & Project Architecture** — the app shell, navigation, design system, data models, and screen scaffolding, built and fully navigable end-to-end before any backend is connected.
+A personal safety and emergency-assistance app built with **Flutter** using an **MVVM architecture**. This repository contains **Modules 1–3**: the app shell and design system, real Firebase-backed authentication and trusted contacts, and a working Safety Timer & Check-In session flow.
 
 ---
 
 ## Table of Contents
 
 - [Module Roadmap](#module-roadmap)
-- [What's Included in Module 1](#whats-included-in-module-1)
+- [What's Included](#whats-included)
 - [Tech Stack](#tech-stack)
 - [Prerequisites](#prerequisites)
+- [Connecting Firebase](#connecting-firebase)
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
-- [Architecture: MVVM](#architecture-mvvm)
+- [Architecture: MVVM + Repositories](#architecture-mvvm--repositories)
+- [The Session Controller](#the-session-controller)
 - [Design System](#design-system)
 - [Widget Catalog](#widget-catalog)
 - [Navigation Map](#navigation-map)
-- [Known Limitations (Module 1 Scope)](#known-limitations-module-1-scope)
-- [Adding the Inter Font](#adding-the-inter-font)
+- [Known Limitations](#known-limitations)
 - [Troubleshooting](#troubleshooting)
 - [Roadmap: What's Next](#roadmap-whats-next)
 
@@ -27,25 +28,34 @@ A personal safety and emergency-assistance app built with **Flutter** using an *
 
 | Module | Scope | Status |
 |---|---|---|
-| **1. Foundation, UX & Architecture** | Design system, navigation shell, MVVM scaffolding, auth screens (stubbed) | ✅ **This repo** |
-| 2. Authentication & Contacts | Firebase Auth, Firestore, real Trusted Contacts CRUD | 🔜 Not started |
-| 3. Safety Timer & Check-In | Countdown session, background execution, check-in flow | 🔜 Not started |
-| 4. Emergency Dispatch | Live GPS sharing, push notifications, "I Need Help" escalation | 🔜 Not started |
+| 1. Foundation, UX & Architecture | Design system, navigation shell, MVVM scaffolding | ✅ Done |
+| 2. Authentication & Contacts | Firebase Auth, Firestore, real Trusted Contacts CRUD | ✅ **Done — this repo** |
+| 3. Safety Timer & Check-In | Countdown session, check-in flow, escalation | ✅ **Done — this repo** |
+| 4. Emergency Dispatch | Live GPS sharing, push notifications, background execution | 🔜 Not started |
 | 5. History, Settings & Accessibility | Safety History log, Settings/Profile, a11y pass | 🔜 Not started |
 | 6. Testing & Release Hardening | Unit/widget tests, error handling, store readiness | 🔜 Not started |
 
 ---
 
-## What's Included in Module 1
+## What's Included
 
-- ✅ A **navigable, agreed product shell** — every screen in the UX kit exists and can be reached
-- ✅ A centralized **design system** (colors, type, spacing, radius) ported from the Guardian Standard UI kit
-- ✅ **MVVM structure** with `ChangeNotifier` ViewModels and `provider` for state management
-- ✅ **Declarative routing** via `go_router`
-- ✅ A **reusable widget library** so every screen looks and behaves consistently
-- ✅ Splash → Login → Registration → Home Dashboard flow, with form validation and simulated (stubbed) auth
-- ✅ A persistent bottom-nav shell (Home / Contacts / History / Settings) with placeholder tabs where later modules attach
-- ✅ `// TODO(Module N): ...` comments at every point where Firebase, sessions, GPS, or notifications will be wired in
+**Module 1 — Foundation**
+- Design system (colors, type, spacing, radius) ported from the Guardian Standard UI kit
+- MVVM scaffolding, `go_router` navigation, reusable widget library
+- Splash → Login → Registration → Home shell, fully navigable
+
+**Module 2 — Authentication & Contacts**
+- `AuthRepository` backed by real **Firebase Authentication** — sign in, register, password reset, friendly error messages
+- `ContactsRepository` backed by real **Cloud Firestore** — live-streamed CRUD for trusted contacts, with primary-contact handling
+- Real **Emergency Contacts** list screen (empty state, per-contact Edit/SMS/Call actions)
+- Real **Add/Edit Contact** screen (name, phone, relationship, "Primary Emergency Contact" toggle, delete)
+
+**Module 3 — Safety Timer & Check-In**
+- `SafetySessionModel` + `SessionRepository` (Firestore-backed, ready for Module 5's History screen to reuse)
+- A shared `SessionController` that owns the live countdown so Home, Start Session, and Active Session all agree on state
+- Real **Start Session** screen — duration presets (15/30/60/custom), optional notes, guardian-contact picker
+- Real **Active Session** screen — pulsing countdown ring, live status, "I'm Safe" / "I Need Help" / "Cancel Session", each with a confirmation dialog
+- The Home Dashboard's "Start Safety Session" and "Emergency Assistance" buttons are now fully wired (Emergency Assistance is a Module-4 stand-in that jumps straight into an escalated session)
 
 ---
 
@@ -56,16 +66,18 @@ A personal safety and emergency-assistance app built with **Flutter** using an *
 | Framework | Flutter (Dart ≥ 3.3.0) |
 | State management | [`provider`](https://pub.dev/packages/provider) (`ChangeNotifier` ViewModels) |
 | Routing | [`go_router`](https://pub.dev/packages/go_router) |
+| Auth | [`firebase_auth`](https://pub.dev/packages/firebase_auth) |
+| Database | [`cloud_firestore`](https://pub.dev/packages/cloud_firestore) |
+| IDs | [`uuid`](https://pub.dev/packages/uuid) |
 | Design | Material 3, custom design tokens, "Inter" typeface |
-| Backend | None yet — arrives in Module 2 (Firebase Auth + Firestore) |
 
 ---
 
 ## Prerequisites
 
-- **Flutter SDK 3.22 or later** (this project uses Material 3's `ColorScheme.surfaceContainer*` roles, which require a recent Flutter version)
-- Dart ≥ 3.3.0 (bundled with the Flutter SDK above)
-- A configured platform target: Android Studio / Xcode / Chrome, depending on where you want to run it
+- **Flutter SDK 3.22 or later**
+- Dart ≥ 3.3.0 (bundled with Flutter)
+- A **Firebase project** (see below) — Modules 2 and 3 require one to actually sign in, save contacts, or start a session
 - Verify your setup:
   ```bash
   flutter doctor
@@ -73,11 +85,48 @@ A personal safety and emergency-assistance app built with **Flutter** using an *
 
 ---
 
+## Connecting Firebase
+
+Modules 2 and 3 talk to real Firebase services, so you need a Firebase project before `flutter run` will get past the Login screen.
+
+1. **Create a Firebase project** at [console.firebase.google.com](https://console.firebase.google.com).
+2. **Enable Email/Password sign-in**: Authentication → Sign-in method → Email/Password → Enable.
+3. **Create a Firestore database**: Firestore Database → Create database → start in test mode for development (lock it down with real security rules before shipping — see below).
+4. **Install the FlutterFire CLI** (one-time, if you don't already have it):
+   ```bash
+   dart pub global activate flutterfire_cli
+   ```
+5. **Generate your real `firebase_options.dart`:**
+   ```bash
+   flutterfire configure
+   ```
+   This logs you into Firebase, lets you pick (or create) the project from step 1, asks which platforms to target (Android/iOS/web/etc.), and **overwrites `lib/firebase_options.dart`** with your project's real credentials — registering each platform app with Firebase automatically along the way. `main.dart` already calls `Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)`, so no other code changes are needed.
+
+   ⚠️ **The `firebase_options.dart` shipped in this repo is a placeholder** with dummy `REPLACE_ME` values — it exists only so the project compiles before you've connected Firebase. Running the app without regenerating it fails with an invalid-api-key error, not the native "Failed to load FirebaseOptions from resource" error you'd get from the older `google-services.json`-only approach.
+6. **Run the app:**
+   ```bash
+   flutter run
+   ```
+
+**Suggested Firestore security rules** for development (tighten before production):
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+---
+
 ## Getting Started
 
 1. **Unzip / clone the project**, then move into it:
    ```bash
-   cd personal_safety_app
+   cd safety_guard_app
    ```
 
 2. **Install dependencies:**
@@ -85,125 +134,133 @@ A personal safety and emergency-assistance app built with **Flutter** using an *
    flutter pub get
    ```
 
-3. **Run the app** (pick a connected device/emulator, or omit `-d` to be prompted):
+3. **Connect Firebase** — see [Connecting Firebase](#connecting-firebase) above. Without this, Login/Registration will show a network/config error.
+
+4. **Run the app:**
    ```bash
    flutter run
    ```
 
-4. **Try the flow:**
-   - Splash screen boots automatically → lands on **Login**
-   - Tap **Sign up** to try **Registration** (live password-strength meter, terms checkbox)
-   - Submitting either form is simulated (~900ms delay, no real account created) and drops you into the **Home Dashboard**
-   - Use the bottom nav to explore **Contacts / History / Settings** placeholder tabs
+5. **Try the flow:**
+   - Register a new account (real Firebase account is created)
+   - Add a trusted contact from the **Contacts** tab
+   - From **Home**, tap **Start Safety Session** → pick a duration and a guardian contact → start it
+   - Watch the countdown on the **Active Session** screen; try **I'm Safe**, **I Need Help**, and **Cancel Session**
+   - Back on **Home**, the status card reflects whatever you just did
 
 ---
 
 ## Project Structure
 
 ```
-personal_safety_app/
+safety_guard_app/
 ├── pubspec.yaml
 ├── analysis_options.yaml
 ├── README.md
 └── lib/
-    ├── main.dart                        # Entry point
-    ├── app.dart                         # MaterialApp.router + theme wiring
+    ├── main.dart                        # Entry point — Firebase.initializeApp()
+    ├── app.dart                         # Composition root: providers + theme + router
     │
     ├── core/
-    │   ├── theme/
-    │   │   ├── app_colors.dart          # Color tokens (Guardian Standard palette)
-    │   │   ├── app_text_styles.dart     # Type scale (Inter)
-    │   │   ├── app_dimens.dart          # Spacing / radius / touch-target tokens
-    │   │   └── app_theme.dart           # Assembled Material 3 ThemeData
-    │   └── routing/
-    │       ├── app_routes.dart          # Route path constants
-    │       └── app_router.dart          # go_router configuration
+    │   ├── theme/                       # Design tokens + assembled ThemeData
+    │   ├── routing/                     # go_router config + route path constants
+    │   └── session/
+    │       └── session_controller.dart  # Shared countdown/session state (see below)
     │
     ├── data/
-    │   └── models/
-    │       ├── user_model.dart
-    │       ├── trusted_contact_model.dart
-    │       └── safety_session_status.dart   # Session state-machine enum
+    │   ├── models/
+    │   │   ├── user_model.dart
+    │   │   ├── trusted_contact_model.dart
+    │   │   ├── safety_session_model.dart
+    │   │   └── safety_session_status.dart
+    │   └── repositories/                # Interface + Firebase/Firestore implementation, per concern
+    │       ├── auth_repository.dart
+    │       ├── contacts_repository.dart
+    │       └── session_repository.dart
     │
     └── presentation/
-        ├── viewmodels/                  # One ChangeNotifier per screen/shell
+        ├── viewmodels/                  # One ChangeNotifier per screen
         │   ├── splash_viewmodel.dart
         │   ├── login_viewmodel.dart
         │   ├── registration_viewmodel.dart
         │   ├── home_viewmodel.dart
-        │   └── main_shell_viewmodel.dart
+        │   ├── main_shell_viewmodel.dart
+        │   ├── contacts_viewmodel.dart
+        │   ├── add_edit_contact_viewmodel.dart
+        │   ├── start_session_viewmodel.dart
+        │   └── active_session_viewmodel.dart
         │
         ├── views/
-        │   ├── splash/splash_screen.dart
-        │   ├── auth/login_screen.dart
-        │   ├── auth/registration_screen.dart
-        │   ├── home/home_dashboard_screen.dart
-        │   ├── shell/main_shell_screen.dart        # Persistent top bar + bottom nav
-        │   └── placeholder/                        # Stand-ins for Modules 2 & 5
-        │       ├── placeholder_screen.dart
-        │       ├── contacts_placeholder_screen.dart
-        │       ├── history_placeholder_screen.dart
-        │       └── settings_placeholder_screen.dart
+        │   ├── splash/, auth/, home/, shell/    # Module 1
+        │   ├── contacts/                        # Module 2: list + add/edit
+        │   ├── session/                         # Module 3: start + active
+        │   └── placeholder/                     # Stand-ins for History/Settings (Module 5)
         │
         └── widgets/                     # Shared, presentation-only components
-            ├── app_primary_button.dart
-            ├── app_emergency_button.dart
-            ├── app_text_field.dart
-            ├── app_shield_logo.dart
-            ├── safety_status_card.dart
-            ├── trusted_contact_tile.dart
-            ├── section_header.dart
-            ├── app_top_bar.dart
-            └── app_bottom_nav_bar.dart
 ```
 
 ---
 
-## Architecture: MVVM
+## Architecture: MVVM + Repositories
 
-This project follows a strict **Model–View–ViewModel** contract:
+Same MVVM contract as Module 1, extended with a **Repository layer** now that there's real data to fetch:
 
 | Layer | Lives in | Rules |
 |---|---|---|
-| **Model** | `data/models/` | Plain Dart classes. No Flutter/UI imports. Just data + simple derived getters. |
-| **ViewModel** | `presentation/viewmodels/` | Extends `ChangeNotifier`. Owns all mutable state, form validation, and async calls (currently stubbed). Exposes only what the View needs — never a raw data source. |
-| **View** | `presentation/views/` | `StatelessWidget`. Wraps itself in a `ChangeNotifierProvider` that creates its ViewModel, reads it with `context.watch<T>()`, and renders. **Contains no business logic.** |
+| **Model** | `data/models/` | Plain Dart classes with `toMap`/`fromMap` for Firestore. No Flutter/UI imports. |
+| **Repository** | `data/repositories/` | An abstract interface (e.g. `ContactsRepository`) plus a concrete Firebase/Firestore implementation. ViewModels depend on the interface, never the implementation. |
+| **ViewModel** | `presentation/viewmodels/` | `ChangeNotifier`. Requests a repository via constructor injection, owns UI state and validation, exposes only what the View needs. |
+| **View** | `presentation/views/` | `StatelessWidget`. Builds its ViewModel in a `ChangeNotifierProvider`, pulling repositories from `context.read<T>()` (see `app.dart`). |
 
-**Example — how a screen is wired:**
+**Example — how a repository reaches a ViewModel:**
 
 ```dart
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+// app.dart — composition root
+Provider<ContactsRepository>(create: (_) => FirestoreContactsRepository()),
 
-  @override
-  Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => LoginViewModel(),
-      child: const _LoginView(),   // reads LoginViewModel via context.watch<T>()
-    );
-  }
-}
+// contacts_list_screen.dart — View
+ChangeNotifierProvider(
+  create: (context) => ContactsViewModel(
+    repository: context.read<ContactsRepository>(),
+    userId: userId,
+  ),
+  child: const _ContactsListView(),
+)
 ```
 
-This keeps every screen swappable and testable in isolation: a ViewModel can be unit-tested with zero widgets, and a View can be redesigned without touching validation or business logic.
+This is the seam Module 6 (testing) uses: swap `FirestoreContactsRepository` for an in-memory fake in a test's provider tree, and every ViewModel/View above it works identically, untouched.
+
+---
+
+## The Session Controller
+
+Three different screens all need to agree on "is there a session running right now, and what state is it in": the Home dashboard's status card, the Start Session screen, and the Active Session screen. Rather than pass that state around via navigation results, `SessionController` (in `core/session/`) is provided **once, at the app root** (`app.dart`), so every screen reads the same live countdown.
+
+```
+StartSessionScreen  ──▶ SessionController.startSession(...)
+                              │  (1-second Timer.periodic ticks here)
+                              ▼
+HomeDashboardScreen  ◀── watches status/remaining ──▶  ActiveSessionScreen
+                              │
+                              ▼
+                    SessionRepository (Firestore)
+```
+
+`StartSessionViewModel` and `ActiveSessionViewModel` are thin, screen-specific wrappers around this controller — they expose formatted/View-friendly getters (like `formattedRemaining`) and delegate actions (`markSafe()`, `escalate()`, `cancelSession()`) to it, keeping the MVVM boundary intact while the controller plays the role of a shared domain service.
 
 ---
 
 ## Design System
 
-Design tokens in `core/theme/` are ported from the provided **Guardian Standard** UI kit (`DESIGN.md` + Stitch mockups), so any screen built later stays visually consistent by construction.
+Ported from the **Guardian Standard** UI kit — see `core/theme/`.
 
 | Token | Value | Usage |
 |---|---|---|
-| Primary | `#004152` | Buttons, links, brand marks — calm, trustworthy |
-| Error / Emergency | `#BA1A1A` | **Reserved exclusively** for `AppEmergencyButton` — never used decoratively, so it keeps its meaning |
+| Primary | `#004152` | Buttons, links, brand marks |
+| Error / Emergency | `#BA1A1A` | **Reserved exclusively** for `AppEmergencyButton` and the "I Need Help" action |
 | Safe | `#1E8E3E` | "Marked safe" states |
-| Surface | `#F8F9FB` | App background |
-| Font | Inter | Full type scale in `app_text_styles.dart` — see [Adding the Inter Font](#adding-the-inter-font) |
-| Radius | 4 / 8 / 12 / 16 / 24 / full | `AppRadius` — buttons use 8, cards use 16, pills use `full` |
-| Min touch target | 48px | `AppA11y.minTouchTarget` — enforced on all primary/emergency buttons |
-
-All values live in `app_colors.dart`, `app_text_styles.dart`, and `app_dimens.dart` — change them once, and every screen updates.
+| Font | Inter | See Module 1's font-loading note in `pubspec.yaml` |
+| Min touch target | 48px | Enforced on all primary/emergency buttons |
 
 ---
 
@@ -211,64 +268,48 @@ All values live in `app_colors.dart`, `app_text_styles.dart`, and `app_dimens.da
 
 | Widget | Purpose |
 |---|---|
-| `AppPrimaryButton` | Standard filled CTA (Log In, Create Account, Start Safety Session) |
-| `AppEmergencyButton` | The one and only "danger" button style — reserved red, used for Emergency Assistance / I Need Help |
-| `AppTextField` | Labeled input with leading icon, used across Login/Registration forms |
-| `AppShieldLogo` | The circular brand mark shown on Splash/Login/Registration |
-| `SafetyStatusCard` | Dashboard hero card reflecting the current `SafetySessionStatus` |
-| `TrustedContactTile` | A contact row with name, role, and a quick-call button (64px min height) |
-| `SectionHeader` | Small uppercase label with an optional trailing action (e.g. "+ Add Contact") |
-| `AppTopBar` | Persistent top bar with avatar, app name, and settings shortcut |
-| `AppBottomNavBar` | Four-tab bottom navigation with pill-highlighted active state |
+| `AppPrimaryButton` | Standard filled CTA |
+| `AppEmergencyButton` | The one "danger" button style — reserved red |
+| `AppTextField` | Labeled input with leading icon |
+| `AppShieldLogo` | Circular brand mark |
+| `SafetyStatusCard` | Dashboard hero card reflecting live `SafetySessionStatus` |
+| `TrustedContactTile` | Compact contact row (dashboard summary) |
+| `ContactCard` | Full contact card with Edit/SMS/Call (Contacts list screen) |
+| `SectionHeader` | Uppercase label with an optional trailing action |
+| `AppTopBar` / `AppBottomNavBar` | Persistent shell chrome |
 
 ---
 
 ## Navigation Map
 
 ```
-/            Splash        → auto-navigates to /login after the boot sequence
-/login       Login         → /home on success, or push /register
-/register    Registration  → /home on success, or pop back to /login
-/home        MainShellScreen (persistent bottom nav)
-  ├─ Home       → HomeDashboardScreen
-  │                 • Safety status card
-  │                 • "Start Safety Session" CTA        (stub → Module 3)
-  │                 • "Emergency Assistance" CTA          (stub → Module 4)
-  │                 • Trusted Contacts summary
-  ├─ Contacts   → placeholder                             (real screen → Module 2)
-  ├─ History    → placeholder                             (real screen → Module 5)
-  └─ Settings   → placeholder                              (real screen → Module 5)
+/                 Splash        → /login after boot
+/login            Login         → /home on success, or push /register
+/register         Registration  → /home on success, or pop back
+/home             MainShellScreen (bottom nav)
+  ├─ Home            HomeDashboardScreen
+  ├─ Contacts         ContactsListScreen              (Module 2)
+  ├─ History           placeholder                     (Module 5)
+  └─ Settings          placeholder                      (Module 5)
+
+/contacts/add      AddEditContactScreen (create)        (Module 2)
+/contacts/edit      AddEditContactScreen (edit, extra: TrustedContactModel)
+
+/session/start      StartSessionScreen                  (Module 3)
+/session/active      ActiveSessionScreen
 ```
 
 ---
 
-## Known Limitations (Module 1 Scope)
+## Known Limitations
 
-These are intentional — they mark exactly what the next modules will replace:
+- **No live GPS or push notifications yet.** Escalation updates session state and marks the guardian as "notified" in the data model, but doesn't yet send an SMS/push or share live location — that's Module 4.
+- **Call/SMS buttons are stubbed.** Tapping Call/SMS on a contact doesn't yet launch the platform dialer/composer (`url_launcher` integration lands in Module 4).
+- **No background execution.** The countdown only ticks while the app is open in the foreground; backgrounding the app pauses the visible timer (it recalculates correctly from `startTime` when you return, but no background notification fires yet).
+- **"Emergency Assistance" is a Module‑4 stand-in.** It starts a 1-minute session and immediately escalates it, just to exercise the same Active Session screen end-to-end — the real dedicated Emergency Hub UI is a Module 4 deliverable.
+- **History and Settings tabs are still placeholders**, per the Module 5 plan — though `SessionRepository.watchRecentSessions()` already exists for History to consume directly.
 
-- **No real authentication.** Login/Registration simulate a ~900ms network call and always "succeed" once the form validates. No account is created, no credentials are stored.
-- **No persistence.** All state (user, session status, contacts) resets on app restart.
-- **Mock dashboard data.** `HomeViewModel` seeds itself with one hardcoded user and one hardcoded contact.
-- **Primary actions are stubbed.** "Start Safety Session" and "Emergency Assistance" show a `SnackBar` instead of navigating, since those flows belong to Modules 3 and 4.
-- **Contacts / History / Settings are placeholders.** They exist as real, tappable destinations so the shell is complete, but their content is a stand-in screen, not the final UI.
-
-Every one of these is marked in code with a comment like:
-```dart
-// TODO(Module 2): replace with FirebaseAuth.signInWithEmailAndPassword.
-```
-
----
-
-## Adding the Inter Font
-
-The design system specifies **Inter** as the typeface, but the `.ttf` files aren't bundled in this deliverable (to keep the repo lightweight). Until they're added, the app falls back to the platform default font — all sizes, weights, and line-heights in `app_text_styles.dart` still apply.
-
-To add the real font:
-
-1. Download the [Inter](https://fonts.google.com/specimen/Inter) font files (Regular/400, SemiBold/600, Bold/700).
-2. Place them under `assets/fonts/`.
-3. In `pubspec.yaml`, uncomment the `fonts:` and `assets:` blocks (already scaffolded at the bottom of the file).
-4. Run `flutter pub get` again.
+Every one of these is marked in code with a `// TODO(Module N): ...` comment.
 
 ---
 
@@ -276,18 +317,23 @@ To add the real font:
 
 | Issue | Fix |
 |---|---|
-| `The getter 'surfaceContainerLowest' isn't defined for the class 'ColorScheme'` | Upgrade Flutter — this project needs **3.22+** for the newer Material 3 surface roles. Run `flutter upgrade`. |
-| Fonts look like the system default | Expected until you add Inter — see [Adding the Inter Font](#adding-the-inter-font). |
-| `flutter run` can't find a device | Run `flutter devices`, or launch an emulator/simulator first. |
+| Login/Registration fails immediately with a network or configuration error | You haven't connected Firebase yet — see [Connecting Firebase](#connecting-firebase). |
+| `[core/no-app] No Firebase App '[DEFAULT]' has been created` | `google-services.json` / `GoogleService-Info.plist` is missing or in the wrong location. |
+| `Failed to load FirebaseOptions from resource. Check that you have defined values.xml correctly.` | You haven't run `flutterfire configure` yet, so `lib/firebase_options.dart` still has placeholder `REPLACE_ME` values — see [Connecting Firebase](#connecting-firebase). |
+| `[core/invalid-api-key]` or similar after running the app | Same cause as above — `flutterfire configure` hasn't been run (or was cancelled partway through). Re-run it. |
+| `PERMISSION_DENIED` reading/writing Firestore | Your security rules don't allow it yet — see the suggested rules above, or confirm you're signed in. |
+| `The getter 'surfaceContainerLowest' isn't defined for the class 'ColorScheme'` | Upgrade Flutter — this project needs **3.22+**. |
+| `Target of URI doesn't exist: 'package:<something>/main.dart'` in `test/widget_test.dart` | Your `pubspec.yaml`'s `name:` field doesn't match the package name that file imports. Either rename `pubspec.yaml`'s `name:` to match your project folder, or use the `test/widget_test.dart` included in this repo (already correct for `name: safety_guard_app`). Then `flutter pub get` again. |
 | Stale build errors after pulling changes | `flutter clean && flutter pub get` |
 
 ---
 
 ## Roadmap: What's Next
 
-**Module 2 — Authentication & Contacts** picks up directly from this shell:
-- Wire `LoginViewModel.submit()` and `RegistrationViewModel.submit()` to Firebase Auth
-- Replace `HomeViewModel`'s mock data with a real Firestore-backed repository
-- Build the real Contacts tab (Add/Edit/Delete Trusted Contacts) in place of `ContactsPlaceholderScreen`
+**Module 4 — Emergency Dispatch** builds directly on this:
+- Replace `SessionController.escalate()`'s TODO with real SMS/push dispatch to the guardian contact
+- Add live GPS location sharing during an active session
+- Wire the Call/SMS buttons on `ContactCard`/`TrustedContactTile` via `url_launcher`
+- Build the dedicated Emergency Hub screen in place of the current dashboard shortcut's stand-in behavior
 
-No View code in this module should need to change structurally — only the ViewModel internals swap from stubs to real repository calls, which is the entire point of the MVVM boundary.
+No existing View should need structural changes — only ViewModel/controller internals swap from local state to real device APIs, which is the entire point of the MVVM + repository boundary kept throughout Modules 1–3.

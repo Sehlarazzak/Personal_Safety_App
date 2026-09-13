@@ -13,4 +13,13 @@ class AppRoutes {
   static const String contacts = '/home/contacts';
   static const String history = '/home/history';
   static const String settings = '/home/settings';
+
+  // Module 2: Contacts — pushed as full screens (with a back arrow),
+  // outside the bottom-nav shell, per the "Add/Edit Contact" mockup.
+  static const String addContact = '/contacts/add';
+  static const String editContact = '/contacts/edit';
+
+  // Module 3: Safety Timer & Check-In — also pushed as full screens.
+  static const String startSession = '/session/start';
+  static const String activeSession = '/session/active';
 }

@@ -26,6 +26,7 @@ class SafetyStatusCard extends StatelessWidget {
       SafetySessionStatus.awaitingCheckIn => AppColors.tertiary,
       SafetySessionStatus.completedSafe => AppColors.safe,
       SafetySessionStatus.escalated => AppColors.error,
+      SafetySessionStatus.cancelled => AppColors.outline,
     };
 
     return Container(

@@ -1,12 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../data/repositories/auth_repository.dart';
 
 enum PasswordStrength { weak, fair, strong }
 
 /// Holds the Registration screen's form state, live password-strength
-/// feedback, and submit flow. Backend account creation is stubbed for
-/// Module 1 (see [submit]) and will be wired to Firebase Auth in Module 2.
+/// feedback, and submit flow.
+///
+/// Module 1 stubbed [submit] with a simulated delay. Module 2 replaces
+/// that body with a real Firebase Auth account-creation call via
+/// [AuthRepository] — the View didn't need to change for this swap.
 class RegistrationViewModel extends ChangeNotifier {
+  final AuthRepository _authRepository;
+
+  RegistrationViewModel({required AuthRepository authRepository}) : _authRepository = authRepository;
+
   final fullNameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -74,7 +82,7 @@ class RegistrationViewModel extends ChangeNotifier {
     return null;
   }
 
-  /// Returns true when the (stubbed) registration succeeded.
+  /// Returns true when registration succeeded.
   Future<bool> submit() async {
     if (!(formKey.currentState?.validate() ?? false)) return false;
     if (!agreedToTerms) {
@@ -87,13 +95,26 @@ class RegistrationViewModel extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
-    // TODO(Module 2): replace with FirebaseAuth.createUserWithEmailAndPassword
-    // plus writing the user profile document.
-    await Future.delayed(const Duration(milliseconds: 900));
-
-    isSubmitting = false;
-    notifyListeners();
-    return true;
+    try {
+      await _authRepository.register(
+        fullName: fullNameController.text,
+        email: emailController.text,
+        password: passwordController.text,
+      );
+      isSubmitting = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      errorMessage = e.message;
+      isSubmitting = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      errorMessage = 'Something went wrong. Please try again.';
+      isSubmitting = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   @override

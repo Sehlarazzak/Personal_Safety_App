@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "815376945049",
+    "project_id": "personal-safety-guard-app",
+    "storage_bucket": "personal-safety-guard-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:815376945049:android:e7065f7a8d230e00e20d08",
+        "android_client_info": {
+          "package_name": "com.example.personal_safety_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZH6OWA8B6krpenk6g31bWxtcu513umh0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

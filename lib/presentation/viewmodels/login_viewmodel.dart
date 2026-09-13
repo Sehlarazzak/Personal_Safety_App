@@ -1,13 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../../data/repositories/auth_repository.dart';
 
 /// Holds the Login screen's form state, validation, and submit flow.
 ///
-/// The actual authentication call is stubbed for Module 1 — it just
-/// simulates a network round-trip so the View can exercise its loading /
-/// success / error states. Module 2 swaps [submit]'s body for a real
-/// Firebase Auth call without changing the View.
+/// Module 1 stubbed [submit] with a simulated delay. Module 2 replaces
+/// that body with a real call through [AuthRepository] — the View
+/// (`LoginScreen`) didn't need to change at all for this swap.
 class LoginViewModel extends ChangeNotifier {
+  final AuthRepository _authRepository;
+
+  LoginViewModel({required AuthRepository authRepository}) : _authRepository = authRepository;
+
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final formKey = GlobalKey<FormState>();
@@ -34,8 +38,8 @@ class LoginViewModel extends ChangeNotifier {
     return null;
   }
 
-  /// Returns true when the (stubbed) login succeeded so the View can
-  /// navigate to the dashboard.
+  /// Returns true when login succeeded so the View can navigate to the
+  /// dashboard.
   Future<bool> submit() async {
     if (!(formKey.currentState?.validate() ?? false)) return false;
 
@@ -43,12 +47,42 @@ class LoginViewModel extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
-    // TODO(Module 2): replace with FirebaseAuth.signInWithEmailAndPassword.
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      await _authRepository.signIn(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+      isSubmitting = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      errorMessage = e.message;
+      isSubmitting = false;
+      notifyListeners();
+      return false;
+    } catch (_) {
+      errorMessage = 'Something went wrong. Please try again.';
+      isSubmitting = false;
+      notifyListeners();
+      return false;
+    }
+  }
 
-    isSubmitting = false;
-    notifyListeners();
-    return true;
+  /// Sends a password-reset email for whatever address is currently typed
+  /// in. Returns an error string on failure, or null on success.
+  Future<String?> sendPasswordReset() async {
+    final email = emailController.text.trim();
+    if (validateEmail(email) != null) {
+      return 'Enter your email address above first.';
+    }
+    try {
+      await _authRepository.sendPasswordResetEmail(email);
+      return null;
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (_) {
+      return 'Something went wrong. Please try again.';
+    }
   }
 
   @override

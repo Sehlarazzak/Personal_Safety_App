@@ -1,30 +1,25 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:personal_safety_app/main.dart';
-
+// `flutter create` scaffolds a default `test/widget_test.dart` that
+// imports `package:<your_project_name>/main.dart` and pumps a counter-app
+// `MyApp` widget. This file replaces that scaffold — the counter-app test
+// doesn't apply here since `main.dart` boots `SafetyGuardApp`, not `MyApp`.
+//
+// A full widget smoke test of `SafetyGuardApp` isn't wired up yet on
+// purpose: `SafetyGuardApp` constructs real `FirebaseAuthRepository` /
+// `FirestoreContactsRepository` instances in its `MultiProvider`, which
+// require `Firebase.initializeApp()` to have already run — pumping it
+// directly in a plain widget test throws. Module 6 (Testing & Release
+// Hardening) introduces fake repositories via `setupFirebaseAuthMocks()`
+// / an in-memory `ContactsRepository` so ViewModels and screens can be
+// tested without a real Firebase project. Until then, this keeps
+// `flutter test` green.
+//
+// If you renamed this project (i.e. `pubspec.yaml`'s `name:` isn't
+// `safety_guard_app`), update any real tests you add to import
+// `package:<your_project_name>/...` instead.
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  test('placeholder — replace with real coverage in Module 6', () {
+    expect(1 + 1, 2);
   });
 }

@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import '../../viewmodels/main_shell_viewmodel.dart';
 import '../../widgets/app_bottom_nav_bar.dart';
 import '../../widgets/app_top_bar.dart';
+import '../contacts/contacts_list_screen.dart';
 import '../home/home_dashboard_screen.dart';
-import '../placeholder/contacts_placeholder_screen.dart';
 import '../placeholder/history_placeholder_screen.dart';
 import '../placeholder/settings_placeholder_screen.dart';
 
@@ -31,7 +31,7 @@ class _MainShellView extends StatelessWidget {
 
   static const _tabs = [
     HomeDashboardScreen(),
-    ContactsPlaceholderScreen(),
+    ContactsListScreen(),
     HistoryPlaceholderScreen(),
     SettingsPlaceholderScreen(),
   ];

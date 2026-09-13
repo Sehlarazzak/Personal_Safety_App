@@ -5,6 +5,7 @@ import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../viewmodels/registration_viewmodel.dart';
 import '../../widgets/app_primary_button.dart';
 import '../../widgets/app_shield_logo.dart';
@@ -18,7 +19,7 @@ class RegistrationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => RegistrationViewModel(),
+      create: (context) => RegistrationViewModel(authRepository: context.read<AuthRepository>()),
       child: const _RegistrationView(),
     );
   }

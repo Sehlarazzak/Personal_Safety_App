@@ -5,6 +5,7 @@ import '../../../core/routing/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../data/repositories/auth_repository.dart';
 import '../../viewmodels/login_viewmodel.dart';
 import '../../widgets/app_primary_button.dart';
 import '../../widgets/app_shield_logo.dart';
@@ -19,7 +20,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => LoginViewModel(),
+      create: (context) => LoginViewModel(authRepository: context.read<AuthRepository>()),
       child: const _LoginView(),
     );
   }
@@ -88,8 +89,16 @@ class _LoginView extends StatelessWidget {
                             children: [
                               Text('Password', style: AppTextStyles.labelBold),
                               TextButton(
-                                onPressed: () {
-                                  // TODO(Module 2): wire up password reset flow.
+                                onPressed: () async {
+                                  final error = await vm.sendPasswordReset();
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        error ?? 'Password reset email sent. Check your inbox.',
+                                      ),
+                                    ),
+                                  );
                                 },
                                 style: TextButton.styleFrom(padding: EdgeInsets.zero),
                                 child: Text(
