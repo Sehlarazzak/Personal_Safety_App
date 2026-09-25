@@ -5,6 +5,12 @@ import 'safety_session_status.dart';
 /// Created when the user taps "Start Safety Session", updated as it
 /// counts down / gets checked into / escalates, and persisted so Module 5
 /// can render it in Safety History.
+///
+/// Module 4 adds [latitude]/[longitude]/[locationUpdatedAt] so the
+/// session record carries the user's last known location — written
+/// periodically while the session is ongoing, and used both by the
+/// in-app Location Status screen and by the SMS dispatched to the
+/// guardian contact on escalation.
 class SafetySessionModel {
   final String id;
   final DateTime startTime;
@@ -12,11 +18,16 @@ class SafetySessionModel {
   final String? notes;
   final String? guardianContactId;
   final String? guardianContactName;
+  final String? guardianPhoneNumber;
   final SafetySessionStatus status;
 
   /// Only set once the session leaves [SafetySessionStatus.active] /
   /// [awaitingCheckIn] — i.e. completed, escalated, or cancelled.
   final DateTime? endTime;
+
+  final double? latitude;
+  final double? longitude;
+  final DateTime? locationUpdatedAt;
 
   const SafetySessionModel({
     required this.id,
@@ -25,8 +36,12 @@ class SafetySessionModel {
     this.notes,
     this.guardianContactId,
     this.guardianContactName,
+    this.guardianPhoneNumber,
     this.status = SafetySessionStatus.active,
     this.endTime,
+    this.latitude,
+    this.longitude,
+    this.locationUpdatedAt,
   });
 
   DateTime get expiresAt => startTime.add(Duration(minutes: durationMinutes));
@@ -38,9 +53,20 @@ class SafetySessionModel {
 
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 
+  bool get hasLocation => latitude != null && longitude != null;
+
+  /// A plain Google Maps link for the last known location — used both in
+  /// the escalation SMS body and the "Open in Maps" button on the
+  /// Location Status screen.
+  String? get mapsUrl =>
+      hasLocation ? 'https://maps.google.com/?q=$latitude,$longitude' : null;
+
   SafetySessionModel copyWith({
     SafetySessionStatus? status,
     DateTime? endTime,
+    double? latitude,
+    double? longitude,
+    DateTime? locationUpdatedAt,
   }) {
     return SafetySessionModel(
       id: id,
@@ -49,8 +75,12 @@ class SafetySessionModel {
       notes: notes,
       guardianContactId: guardianContactId,
       guardianContactName: guardianContactName,
+      guardianPhoneNumber: guardianPhoneNumber,
       status: status ?? this.status,
       endTime: endTime ?? this.endTime,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationUpdatedAt: locationUpdatedAt ?? this.locationUpdatedAt,
     );
   }
 
@@ -62,12 +92,18 @@ class SafetySessionModel {
       notes: map['notes'] as String?,
       guardianContactId: map['guardianContactId'] as String?,
       guardianContactName: map['guardianContactName'] as String?,
+      guardianPhoneNumber: map['guardianPhoneNumber'] as String?,
       status: SafetySessionStatus.values.firstWhere(
         (e) => e.name == map['status'],
         orElse: () => SafetySessionStatus.none,
       ),
       endTime: map['endTimeMs'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['endTimeMs'] as int)
+          : null,
+      latitude: (map['latitude'] as num?)?.toDouble(),
+      longitude: (map['longitude'] as num?)?.toDouble(),
+      locationUpdatedAt: map['locationUpdatedAtMs'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['locationUpdatedAtMs'] as int)
           : null,
     );
   }
@@ -79,8 +115,12 @@ class SafetySessionModel {
       'notes': notes,
       'guardianContactId': guardianContactId,
       'guardianContactName': guardianContactName,
+      'guardianPhoneNumber': guardianPhoneNumber,
       'status': status.name,
       'endTimeMs': endTime?.millisecondsSinceEpoch,
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationUpdatedAtMs': locationUpdatedAt?.millisecondsSinceEpoch,
     };
   }
 }

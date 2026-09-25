@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/services/contact_launcher.dart';
 import '../../../core/session/session_controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
@@ -19,10 +20,11 @@ import '../../widgets/trusted_contact_tile.dart';
 /// card, the "Start Safety Session" hero CTA, the reserved-red "Emergency
 /// Assistance" shortcut, and a Trusted Contacts summary.
 ///
-/// "Start Safety Session" now pushes into the real Module 3 flow. The
-/// "Emergency Assistance" shortcut stays stubbed until Module 4 builds the
-/// dedicated dispatch hub — tapping it just jumps straight into an
-/// escalated session as a stand-in for that flow.
+/// Module 4: "Emergency Assistance" now opens the dedicated
+/// [EmergencyHubScreen] (SOS button, direct call, emergency services)
+/// instead of the Module 3 stand-in that silently started and escalated a
+/// session with no other options. The contact tile's call button now
+/// actually opens the dialer via [ContactLauncher].
 class HomeDashboardScreen extends StatelessWidget {
   const HomeDashboardScreen({super.key});
 
@@ -42,45 +44,14 @@ class HomeDashboardScreen extends StatelessWidget {
 class _HomeDashboardView extends StatelessWidget {
   const _HomeDashboardView();
 
-  Future<void> _handleEmergencyTap(BuildContext context, HomeViewModel vm) async {
-    if (vm.sessionStatus.isOngoing) {
-      // Already mid-session — jump straight to it rather than starting a
-      // second, conflicting one.
-      context.push(AppRoutes.activeSession);
-      return;
+  Future<void> _handleCall(BuildContext context, String phoneNumber) async {
+    try {
+      await context.read<ContactLauncher>().launchCall(phoneNumber);
+    } on LaunchException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
     }
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Request emergency help?'),
-        content: const Text(
-          'Your primary contact will be notified immediately with your location. '
-          'A full emergency dispatch experience arrives in Module 4 — for now '
-          'this starts an escalated session right away.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text('I Need Help', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    final guardian = vm.primaryContacts.isNotEmpty ? vm.primaryContacts.first : null;
-    await vm.sessionController.startSession(
-      userId: vm.currentUser.id,
-      durationMinutes: 1,
-      guardian: guardian,
-    );
-    await vm.sessionController.escalate();
-    if (context.mounted) context.push(AppRoutes.activeSession);
   }
 
   @override
@@ -116,7 +87,7 @@ class _HomeDashboardView extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             AppEmergencyButton(
               label: 'Emergency Assistance',
-              onPressed: () => _handleEmergencyTap(context, vm),
+              onPressed: () => context.push(AppRoutes.emergencyHub),
             ),
             const SizedBox(height: AppSpacing.lg),
             Container(
@@ -150,9 +121,7 @@ class _HomeDashboardView extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: AppSpacing.xs),
                         child: TrustedContactTile(
                           contact: contact,
-                          onCall: () {
-                            // TODO(Module 4): launch the platform dialer (url_launcher tel: scheme).
-                          },
+                          onCall: () => _handleCall(context, contact.phoneNumber),
                         ),
                       ),
                     ),

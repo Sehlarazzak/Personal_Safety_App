@@ -3,7 +3,9 @@ import '../../data/models/trusted_contact_model.dart';
 import '../../presentation/views/auth/login_screen.dart';
 import '../../presentation/views/auth/registration_screen.dart';
 import '../../presentation/views/contacts/add_edit_contact_screen.dart';
+import '../../presentation/views/emergency/emergency_hub_screen.dart';
 import '../../presentation/views/session/active_session_screen.dart';
+import '../../presentation/views/session/location_status_screen.dart';
 import '../../presentation/views/session/start_session_screen.dart';
 import '../../presentation/views/shell/main_shell_screen.dart';
 import '../../presentation/views/splash/splash_screen.dart';
@@ -54,6 +56,16 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: AppRoutes.activeSession,
       builder: (context, state) => const ActiveSessionScreen(),
+    ),
+
+    // Module 4: Emergency Dispatch — also full-screen.
+    GoRoute(
+      path: AppRoutes.emergencyHub,
+      builder: (context, state) => const EmergencyHubScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.locationStatus,
+      builder: (context, state) => const LocationStatusScreen(),
     ),
   ],
 );

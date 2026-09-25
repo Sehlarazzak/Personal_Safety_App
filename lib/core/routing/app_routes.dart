@@ -22,4 +22,8 @@ class AppRoutes {
   // Module 3: Safety Timer & Check-In — also pushed as full screens.
   static const String startSession = '/session/start';
   static const String activeSession = '/session/active';
+
+  // Module 4: Emergency Dispatch — pushed as full screens.
+  static const String emergencyHub = '/emergency';
+  static const String locationStatus = '/session/location';
 }

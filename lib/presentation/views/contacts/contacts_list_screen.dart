@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/routing/app_routes.dart';
+import '../../../core/services/contact_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimens.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -38,7 +39,33 @@ class ContactsListScreen extends StatelessWidget {
 class _ContactsListView extends StatelessWidget {
   const _ContactsListView();
 
-  Future<void> _confirmDelete(BuildContext context, ContactsViewModel vm, String contactId, String name) async {
+  Future<void> _handleCall(BuildContext context, String phoneNumber) async {
+    try {
+      await context.read<ContactLauncher>().launchCall(phoneNumber);
+    } on LaunchException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+
+  Future<void> _handleMessage(BuildContext context, String phoneNumber, String name) async {
+    try {
+      await context.read<ContactLauncher>().launchSms(
+            phoneNumber,
+            "Hi $name, checking in — just wanted you to know I'm safe.",
+          );
+    } on LaunchException catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      }
+    }
+  }
+
+  /// Shows a confirmation dialog and deletes the contact if confirmed.
+  /// Returns whether the swipe-to-delete gesture should complete (true)
+  /// or snap back (false) — required by [Dismissible.confirmDismiss].
+  Future<bool> _confirmDelete(BuildContext context, ContactsViewModel vm, String contactId, String name) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -58,7 +85,9 @@ class _ContactsListView extends StatelessWidget {
     );
     if (confirmed == true) {
       await vm.deleteContact(contactId);
+      return true;
     }
+    return false;
   }
 
   @override
@@ -79,6 +108,10 @@ class _ContactsListView extends StatelessWidget {
             'These contacts are notified with your location if you activate an SOS alert or miss a check-in.',
             style: AppTextStyles.bodyMd,
           ),
+          if (vm.contacts.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.xs),
+            Text('Swipe a contact left to remove it.', style: AppTextStyles.caption),
+          ],
           const SizedBox(height: AppSpacing.lg),
 
           if (vm.isLoading)
@@ -95,15 +128,25 @@ class _ContactsListView extends StatelessWidget {
             _EmptyState(onAddContact: () => context.push(AppRoutes.addContact))
           else ...[
             for (final contact in vm.contacts) ...[
-              ContactCard(
-                contact: contact,
-                onEdit: () => context.push(AppRoutes.editContact, extra: contact),
-                onCall: () {
-                  // TODO(Module 4): launch the platform dialer (url_launcher tel: scheme).
-                },
-                onMessage: () {
-                  // TODO(Module 4): launch the platform SMS composer (url_launcher sms: scheme).
-                },
+              Dismissible(
+                key: ValueKey(contact.id),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (_) => _confirmDelete(context, vm, contact.id, contact.name),
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.errorContainer,
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  child: Icon(Icons.delete_outline, color: AppColors.onErrorContainer),
+                ),
+                child: ContactCard(
+                  contact: contact,
+                  onEdit: () => context.push(AppRoutes.editContact, extra: contact),
+                  onCall: () => _handleCall(context, contact.phoneNumber),
+                  onMessage: () => _handleMessage(context, contact.phoneNumber, contact.name),
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
             ],

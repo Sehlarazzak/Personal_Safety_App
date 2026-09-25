@@ -9,3 +9,8 @@ build/
 ios/Pods/
 ios/.symlinks/
 android/.gradle/
+
+google-services.json
+android/app/google-services-old.json
+*.log
+android/.kotlin/

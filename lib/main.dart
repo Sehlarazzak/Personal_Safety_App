@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'app.dart';
+import 'core/services/notification_service.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -18,7 +19,15 @@ Future<void> main() async {
   //   2. flutterfire configure
   //      (select your Firebase project, then Android/iOS/etc. targets)
   // This generates `lib/firebase_options.dart` — do not hand-write it.
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp();
 
-  runApp(const SafetyGuardApp());
+  // Module 4: local notifications (check-in reminders, escalation
+  // confirmations). Initialized here — not lazily inside a Provider's
+  // create callback — because setup is async (it requests the Android
+  // 13+ POST_NOTIFICATIONS permission) and must finish before any screen
+  // could plausibly try to show a notification.
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+
+  runApp(SafetyGuardApp(notificationService: notificationService));
 }
