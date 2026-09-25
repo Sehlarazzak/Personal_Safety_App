@@ -328,12 +328,4 @@ Every one of these is marked in code with a `// TODO(Module N): ...` comment.
 
 ---
 
-## Roadmap: What's Next
 
-**Module 4 — Emergency Dispatch** builds directly on this:
-- Replace `SessionController.escalate()`'s TODO with real SMS/push dispatch to the guardian contact
-- Add live GPS location sharing during an active session
-- Wire the Call/SMS buttons on `ContactCard`/`TrustedContactTile` via `url_launcher`
-- Build the dedicated Emergency Hub screen in place of the current dashboard shortcut's stand-in behavior
-
-No existing View should need structural changes — only ViewModel/controller internals swap from local state to real device APIs, which is the entire point of the MVVM + repository boundary kept throughout Modules 1–3.
